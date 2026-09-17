@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install)",
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm --filter @stock/server test:*)",
+      "Bash(pnpm --filter @stock/server prisma:*)",
+      "Bash(pnpm --filter @stock/server seed)",
+      "Bash(pnpm --filter @stock/server reconcile)",
+      "Bash(pnpm --filter @stock/server explain)",
+      "Bash(pnpm --filter @stock/client build)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(npx prisma format)",
+      "Bash(npx prisma validate)",
+      "Bash(docker compose ps:*)",
+      "Bash(docker compose logs:*)",
+      "Bash(docker compose up:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Bash(docker compose down -v:*)",
+      "Bash(pnpm --filter @stock/server prisma migrate reset:*)",
+      "Read(./.env)"
+    ]
+  }
+}

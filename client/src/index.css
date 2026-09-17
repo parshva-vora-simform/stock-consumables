@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04';
+  }
+
+  /* A visible focus ring on every interactive element, always. Keyboard users
+     are not a minority case in a warehouse app — a handler with gloves on is
+     often tabbing rather than pointing.
+
+     This is the one place blue survives: a focus ring in the same slate as the
+     buttons it outlines would be invisible on exactly the controls that most
+     need it. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white;
+  }
+
+  /* Quantities are compared column-wise, so digits must be the same width. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .skeleton {
+    @apply animate-pulse rounded bg-slate-200;
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "stock-consumables",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @stock/server --filter @stock/client dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm --filter @stock/server test",
+    "db:migrate": "pnpm --filter @stock/server prisma:migrate",
+    "db:seed": "pnpm --filter @stock/server seed",
+    "reconcile": "pnpm --filter @stock/server reconcile"
+  },
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "pnpm@9.15.4"
+}

@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.env
+*.local
+coverage/
+.DS_Store
+*.log
+.pnpm-store/
+
+# TypeScript incremental build metadata — machine-specific, not source.
+*.tsbuildinfo

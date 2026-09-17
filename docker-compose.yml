@@ -1,0 +1,89 @@
+# Full stack, migrated and seeded, from `docker compose up` (NFR-1).
+#
+# Ordering matters here: `server` waits for `migrate` to *complete*, not merely
+# to start, so the API can never come up against an unmigrated database.
+
+name: stock-consumables
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  # One-shot: apply migrations, then seed. Exits 0 on success, which is what
+  # `service_completed_successfully` below waits for.
+  migrate:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+      target: builder
+    environment:
+      # Built from the parts rather than taken from the DATABASE_URL variable:
+      # that one points at localhost so the Prisma CLI, `pnpm dev` and the test
+      # suite work on the host. Inside this network the host is a service name.
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+    command: sh -c "pnpm --filter @stock/server prisma:deploy && pnpm --filter @stock/server seed"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+      target: runner
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      PORT: 4000
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:4000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+      VITE_ENABLE_RACE_DEMO: ${VITE_ENABLE_RACE_DEMO:-true}
+    ports:
+      - '5173:5173'
+    depends_on:
+      server:
+        condition: service_started
+
+volumes:
+  postgres_data:
