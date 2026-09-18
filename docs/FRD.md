@@ -503,7 +503,7 @@ reload does not sign the user out.
 
 ## 8. Test Plan — what this POC is checked for
 
-**137 tests across 13 files**, run against a real PostgreSQL. Never a mock: a mock cannot exhibit
+**150 tests across 13 files**, run against a real PostgreSQL. Never a mock: a mock cannot exhibit
 row-level locking, which is the only thing this system is really claiming, so a mocked suite would
 pass while proving nothing.
 
@@ -512,16 +512,16 @@ pass while proving nothing.
 | `concurrency.test.ts` | 6 | **T-5.** The zero floor under 2, 10, 20 and 50 concurrent claims, plus a 20-round loop — a race that passes once has been sampled, not proven |
 | `perLocation.test.ts` | 4 | T-7. Stock at WH-B never satisfies a request at WH-A, including simultaneous races at two locations |
 | `immutability.test.ts` | 8 | T-8, T-9. `UPDATE`/`DELETE` refused at the database, through raw SQL and the ORM; no quantity column exists; no route accepts one |
-| `locationAccess.test.ts` | 9 | T-4. A handler refused at the query, asserted at the API; balances and history scoped |
+| `locationAccess.test.ts` | 11 | T-4. A handler refused at the query, asserted at the API; balances and history scoped; and that `?locationId=` narrows the caller's scope rather than replacing it |
 | `validation.test.ts` | 9 | T-1, T-2. Zero, negative, fractional and non-numeric quantities; unknown item and location — with a spy asserting the service was never reached |
-| `auth.test.ts` | 10 | T-3. No anonymous path; forged, expired, refresh-as-access and deactivated-account tokens all refused |
+| `auth.test.ts` | 18 | T-3. No anonymous path; forged, expired, refresh-as-access and deactivated-account tokens all refused. Refresh tokens rotate; a spent one is replay and revokes the family, including when five exchanges arrive at once |
 | `reversal.test.ts` | 7 | T-10, T-11. Corrections append; reversal happens at most once, including concurrently; a reversal that would breach the floor is refused |
 | `idempotency.test.ts` | 5 | T-12. Five concurrent submits with one key move stock once |
 | `audit.test.ts` | 6 | T-15. Every attempt recorded, including refusals and attempts against absent items |
-| `passwordReset.test.ts` | 20 | FR-13. Hashing, single use, enumeration resistance, throttling, session invalidation |
+| `passwordReset.test.ts` | 21 | FR-13. Hashing, single use, enumeration resistance, throttling, session invalidation; a throttled account answers identically to an unknown address |
 | `teamManagement.test.ts` | 15 | FR-12. Atomic location moves, audited, manager-only, past movements untouched |
 | `itemManagement.test.ts` | 14 | FR-11. An item with history cannot be deleted or re-measured |
-| `pagination.test.ts` | 24 | FR-14. Pages never repeat or drop a row, even when every sort value ties |
+| `pagination.test.ts` | 26 | FR-14. Pages never repeat or drop a row, even when every sort value ties; and `hasNext` comes from the probe row, so an exactly-full last page does not claim another |
 
 ### Still outstanding
 
@@ -609,5 +609,6 @@ Balances are keyed `(item_id, location_id)` with a unique constraint, and the st
 3. **Stock-take (§3.10).** The acid test of "no path sets a quantity".
 4. **Audit read API (FR-9.5)** and its screen.
 5. **Transfers (FR-5.3).**
-6. **The ESLint rule** confining `stock_balances` writes to one file. CLAUDE.md describes it; there
-   is no ESLint config yet, so it is a convention rather than an enforcement.
+6. **The race demo page (UI-9).** `VITE_ENABLE_RACE_DEMO` is plumbed through `.env.example` and
+   `docker-compose.yml` but no code reads it — the flag promises a screen that does not exist.
+   Either build it or remove the flag; a setting that does nothing is worse than no setting.

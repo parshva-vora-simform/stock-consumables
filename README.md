@@ -92,7 +92,7 @@ Then:
 pnpm test
 ```
 
-137 tests across 13 files, all against a real PostgreSQL — never a mock, because a mock cannot
+150 tests across 13 files, all against a real PostgreSQL — never a mock, because a mock cannot
 exhibit row-level locking, which is the main thing this system claims.
 
 The headline one fires 50 simultaneous stock-out requests at a single remaining unit and asserts
